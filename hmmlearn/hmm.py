@@ -1074,8 +1074,8 @@ class PoissonHMM(_BaseHMM):
         rng = check_random_state(random_state)
         return rng.poisson(self.means_[state])
 
-    def _init(self, X, lengths=None, params='stmc'):
-        super(PoissonHMM, self)._init(X, lengths=lengths, params=params)
+    def _init(self, X, lengths=None):
+        super(PoissonHMM, self)._init(X, lengths=lengths)
 
         _, n_features = X.shape
         if hasattr(self, 'n_features') and self.n_features != n_features:
@@ -1083,7 +1083,7 @@ class PoissonHMM(_BaseHMM):
                              'expected %s' % (n_features, self.n_features))
 
         self.n_features = n_features
-        if 'm' in params or not hasattr(self, "means_"):
+        if 'm' in self.init_params or not hasattr(self, "means_"):
             kmeans = cluster.KMeans(n_clusters=self.n_components,
                                     random_state=self.random_state)
             kmeans.fit(X)
