@@ -5,6 +5,8 @@
 # API changes: Jaques Grobler <jaquesgrobler@gmail.com>
 # Modifications to create of the HMMLearn module: Gael Varoquaux
 # More API changes: Sergei Lebedev <superbobry@gmail.com>
+# Addition of PoissonHMM: Caleb Kemere <caleb.kemere@rice.edu>
+# Modifications to PoissonHMM: Etienne Ackermann <era3@rice.edu>
 
 """
 The :mod:`hmmlearn.hmm` module implements hidden Markov models.
@@ -20,7 +22,7 @@ from sklearn.mixture import (
 from sklearn.utils import check_random_state
 
 from .base import _BaseHMM
-from .utils import iter_from_X_lengths, normalize
+from .utils import iter_from_X_lengths, normalize, log_multivariate_poisson_density
 
 __all__ = ["GMMHMM", "GaussianHMM", "MultinomialHMM"]
 
@@ -1045,7 +1047,7 @@ class PoissonHMM(_BaseHMM):
     ...                             #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     PoissonHMM(algorithm='viterbi',...
     """
-    def __init__(self, n_components=1, 
+    def __init__(self, n_components=1,
                  startprob_prior=1.0, transmat_prior=1.0,
                  means_prior=0, means_weight=0,
                  algorithm="viterbi", random_state=None,
@@ -1096,24 +1098,22 @@ class PoissonHMM(_BaseHMM):
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
-                                          posteriors, fwdlattice, bwdlattice,
-                                          params):
+                                          posteriors, fwdlattice, bwdlattice):
         super(PoissonHMM, self)._accumulate_sufficient_statistics(
-            stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
-            params)
+            stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice)
 
-        if 'm' in params in params:
+        if 'm' in self.params:
             stats['post'] += posteriors.sum(axis=0)
             stats['obs'] += np.dot(posteriors.T, obs)
 
-    def _do_mstep(self, stats, params):
-        super(PoissonHMM, self)._do_mstep(stats, params)
+    def _do_mstep(self, stats):
+        super(PoissonHMM, self)._do_mstep(stats)
 
         means_prior = self.means_prior
         means_weight = self.means_weight
 
         denom = stats['post'][:, np.newaxis]
-        if 'm' in params:
+        if 'm' in self.params:
             self.means_ = ((means_weight * means_prior + stats['obs'])
                            / (means_weight + denom))
             self.means_ = np.where(self.means_ > 1e-3, self.means_, 1e-3)
