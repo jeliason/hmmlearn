@@ -78,3 +78,14 @@ def log_mask_zero(a):
         a_log = np.log(a)
         a_log[a <= 0] = 0.0
         return a_log
+
+def log_multivariate_poisson_density(X, means) :
+  # # modeled on log_multivariate_normal_density from sklearn.mixture
+  n_samples, n_dim = X.shape
+  # -lambda + k log(lambda) - log(k!)
+  log_means = np.where(means > np.log(1e-3), np.log(means), np.log(1e-3))
+  lpr =  np.dot(X, log_means.T)
+  lpr = lpr - np.sum(means,axis=1) # rates for all elements are summed and then broadcast across the observation dimenension
+  log_factorial = np.sum(gammaln(X + 1), axis=1)
+  lpr = lpr - log_factorial[:,None] # logfactobs vector broad cast across the state dimension
+  return lpr
