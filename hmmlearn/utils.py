@@ -84,7 +84,7 @@ def log_multivariate_poisson_density(X, means) :
   # # modeled on log_multivariate_normal_density from sklearn.mixture
   n_samples, n_dim = X.shape
   # -lambda + k log(lambda) - log(k!)
-  log_means = np.where(means > np.log(1e-3), np.log(means), np.log(1e-3))
+  log_means = np.where(means > 1e-3, np.log(means), np.log(1e-3))
   lpr =  np.dot(X, log_means.T)
   lpr = lpr - np.sum(means,axis=1) # rates for all elements are summed and then broadcast across the observation dimenension
   log_factorial = np.sum(gammaln(X + 1), axis=1)
