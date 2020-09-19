@@ -1,10 +1,5 @@
 import numpy as np
-<<<<<<< HEAD:hmmlearn/utils.py
-from scipy.misc import logsumexp
-from scipy.special import gammaln
-=======
-from scipy.special import logsumexp
->>>>>>> add35ff41052fc23e76fbd484dbed8ddcb1a452d:lib/hmmlearn/utils.py
+from scipy.special import gammaln, logsumexp
 
 
 def normalize(a, axis=None):
@@ -88,22 +83,6 @@ def log_mask_zero(a):
     """
     a = np.asarray(a)
     with np.errstate(divide="ignore"):
-<<<<<<< HEAD:hmmlearn/utils.py
-        a_log = np.log(a)
-        a_log[a <= 0] = 0.0
-        return a_log
-
-def log_multivariate_poisson_density(X, means) :
-  # # modeled on log_multivariate_normal_density from sklearn.mixture
-  n_samples, n_dim = X.shape
-  # -lambda + k log(lambda) - log(k!)
-  log_means = np.where(means > 1e-3, np.log(means), np.log(1e-3))
-  lpr =  np.dot(X, log_means.T)
-  lpr = lpr - np.sum(means,axis=1) # rates for all elements are summed and then broadcast across the observation dimenension
-  log_factorial = np.sum(gammaln(X + 1), axis=1)
-  lpr = lpr - log_factorial[:,None] # logfactobs vector broad cast across the state dimension
-  return lpr
-=======
         return np.log(a)
 
 
@@ -118,4 +97,15 @@ def fill_covars(covars, covariance_type='full', n_components=1, n_features=1):
         eye = np.eye(n_features)[np.newaxis, :, :]
         covars = covars[:, np.newaxis, np.newaxis]
         return eye * covars
->>>>>>> add35ff41052fc23e76fbd484dbed8ddcb1a452d:lib/hmmlearn/utils.py
+
+def log_multivariate_poisson_density(X, means) :
+  # # modeled on log_multivariate_normal_density from sklearn.mixture
+  n_samples, n_dim = X.shape
+  # -lambda + k log(lambda) - log(k!)
+  log_means = np.where(means > 1e-3, np.log(means), np.log(1e-3))
+  lpr =  np.dot(X, log_means.T)
+  lpr = lpr - np.sum(means,axis=1) # rates for all elements are summed and then broadcast across the observation dimenension
+  log_factorial = np.sum(gammaln(X + 1), axis=1)
+  lpr = lpr - log_factorial[:,None] # logfactobs vector broad cast across the state dimension
+  return lpr
+

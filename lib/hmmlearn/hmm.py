@@ -976,12 +976,43 @@ class GMMHMM(_BaseHMM):
                 new_cov_denom = (
                     stats['post_mix_sum'][:, :, None] + 1 + 2 * (alphas + 1))
                 new_cov = new_cov_numer / new_cov_denom
+            elif self.covariance_type == 'spherical':
+                centered_norm2 = np.sum(stats['centered'] ** 2, axis=-1)
+                centered_means_norm2 = np.sum(centered_means ** 2, axis=-1)
 
-<<<<<<< HEAD:hmmlearn/hmm.py
-        # Assigning new values to class members
-        self.weights_ = new_weights
-        self.means_ = new_means
-        self.covars_ = new_cov
+                alphas = self.covars_prior
+                betas = self.covars_weight
+
+                new_cov_numer = (
+                    np.einsum(
+                        'ijk,ijk->jk', stats['post_comp_mix'], centered_norm2)
+                    + lambdas * centered_means_norm2
+                    + 2 * betas
+                )
+                new_cov_denom = (
+                    nf * (stats['post_mix_sum'] + 1) + 2 * (alphas + 1))
+                new_cov = new_cov_numer / new_cov_denom
+
+            elif self.covariance_type == 'tied':
+                centered_dots = outer_f(stats['centered'])
+                centered_means_dots = outer_f(centered_means)
+
+                psis_t = np.transpose(self.covars_prior, axes=(0, 2, 1))
+                nus = self.covars_weight
+
+                lambdas_cmdots_prod_sum = (
+                    np.einsum('ij,ijkl->ikl', lambdas, centered_means_dots))
+
+                new_cov_numer = (
+                    np.einsum('ijk,ijklm->jlm',
+                              stats['post_comp_mix'], centered_dots)
+                    + lambdas_cmdots_prod_sum + psis_t)
+                new_cov_denom = (
+                    stats['post_sum'] + nm + nus + nf + 1)[:, None, None]
+                new_cov = new_cov_numer / new_cov_denom
+
+            self.covars_ = new_cov
+
 
 class PoissonHMM(_BaseHMM):
     """Hidden Markov Model with independent Poisson emissions.
@@ -1105,41 +1136,4 @@ class PoissonHMM(_BaseHMM):
             self.means_ = ((means_weight * means_prior + stats['obs'])
                            / (means_weight + denom))
             self.means_ = np.where(self.means_ > 1e-3, self.means_, 1e-3)
-=======
-            elif self.covariance_type == 'spherical':
-                centered_norm2 = np.sum(stats['centered'] ** 2, axis=-1)
-                centered_means_norm2 = np.sum(centered_means ** 2, axis=-1)
-
-                alphas = self.covars_prior
-                betas = self.covars_weight
-
-                new_cov_numer = (
-                    np.einsum(
-                        'ijk,ijk->jk', stats['post_comp_mix'], centered_norm2)
-                    + lambdas * centered_means_norm2
-                    + 2 * betas
-                )
-                new_cov_denom = (
-                    nf * (stats['post_mix_sum'] + 1) + 2 * (alphas + 1))
-                new_cov = new_cov_numer / new_cov_denom
-
-            elif self.covariance_type == 'tied':
-                centered_dots = outer_f(stats['centered'])
-                centered_means_dots = outer_f(centered_means)
-
-                psis_t = np.transpose(self.covars_prior, axes=(0, 2, 1))
-                nus = self.covars_weight
-
-                lambdas_cmdots_prod_sum = (
-                    np.einsum('ij,ijkl->ikl', lambdas, centered_means_dots))
-
-                new_cov_numer = (
-                    np.einsum('ijk,ijklm->jlm',
-                              stats['post_comp_mix'], centered_dots)
-                    + lambdas_cmdots_prod_sum + psis_t)
-                new_cov_denom = (
-                    stats['post_sum'] + nm + nus + nf + 1)[:, None, None]
-                new_cov = new_cov_numer / new_cov_denom
-
-            self.covars_ = new_cov
->>>>>>> add35ff41052fc23e76fbd484dbed8ddcb1a452d:lib/hmmlearn/hmm.py
+            
